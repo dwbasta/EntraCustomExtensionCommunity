@@ -723,7 +723,7 @@ Benefits:
 4. Once enabled, an **Object (principal) ID** will be displayed
 5. **Copy this Object ID** - you'll need it for permission assignment
 
-## Part 2: Assigning Permissions to Managed Identity
+## Part 4: Assigning Permissions to Managed Identity
 
 ```
 Install-Module Microsoft.Graph -Scope CurrentUser

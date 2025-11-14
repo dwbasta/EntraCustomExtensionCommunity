@@ -108,6 +108,7 @@ The privileged account update pattern relies on a correlation between user and p
 
 ## 1.) Joiner Setup
 
+📄 **[Privileged Account Joiner Template](./Templates/Privilege%20account%20Joiner.md)**
 
 ## 2.) Mover Setup
 
