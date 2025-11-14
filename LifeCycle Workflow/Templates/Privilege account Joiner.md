@@ -357,7 +357,7 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
             },
             "Get_Users_Details": {
                 "runAfter": {
-                    "Set-PrivilegeAPIProvisioningURL": [
+                    "variables": [
                         "Succeeded"
                     ]
                 },
@@ -536,10 +536,10 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
                     "body": {
                         "Operations": [
                             {
-                                "bulkId": "@{variables('AdminEmployeeIDAdd')}@{body('Parse_User_details')?['employeeId']}",
+                                "bulkId": "@{body('Parse_User_details')?['employeeId']}",
                                 "data": {
-                                    "displayName": "@{variables('AdminNamingConvention')}@{body('Parse_User_details')?['displayName']}",
-                                    "externalId": "@{variables('AdminEmployeeIDAdd')}@{body('Parse_User_details')?['employeeId']}",
+                                    "displayName": "@{variables('AdminUPNNamingConvention')}@{body('Parse_User_details')?['displayName']}",
+                                    "externalId": "@{variables('AdminEmployeeIDNamingConvention')}@{body('Parse_User_details')?['employeeId']}",
                                     "name": {
                                         "familyName": "@{body('Parse_User_details')?['surname']}",
                                         "givenName": "@{body('Parse_User_details')?['givenName']}"
@@ -579,66 +579,30 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
                     }
                 }
             },
-            "Set-AdminEmployeeIDPrefix": {
-                "runAfter": {
-                    "Set-AdminNamingConvention": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
-                        {
-                            "name": "AdminEmployeeIDAdd",
-                            "type": "string",
-                            "value": "A"
-                        }
-                    ]
-                }
-            },
-            "Set-AdminNamingConvention": {
+            "variables": {
                 "runAfter": {},
                 "type": "InitializeVariable",
                 "inputs": {
                     "variables": [
                         {
-                            "name": "AdminNamingConvention",
+                            "name": "AdminUPNNamingConvention",
                             "type": "string",
                             "value": "AZADM-"
-                        }
-                    ]
-                }
-            },
-            "Set-PrivilegeAPIProvisioningURL": {
-                "runAfter": {
-                    "Set-TenantID": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
+                        },
+                        {
+                            "name": "AdminEmployeeIDNamingConvention",
+                            "type": "string",
+                            "value": "A"
+                        },
                         {
                             "name": "APIURL",
                             "type": "string",
                             "value": "https://graph.microsoft.com/v1.0/servicePrincipals/efbf203f-08b0-4ad1-872c-cfe21cfb7580/synchronization/jobs/API2AAD.e0e1f74aa30042c6a65c917c4befb560.5de63f34-e2d0-442f-9f52-85c6a6b91d76/bulkUpload"
-                        }
-                    ]
-                }
-            },
-            "Set-TenantID": {
-                "runAfter": {
-                    "Set-AdminEmployeeIDPrefix": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
+                        },
                         {
-                            "name": "TenantID",
+                            "name": "Onmicrosoftdomain",
                             "type": "string",
-                            "value": "e0e1f74a-a300-42c6-a65c-917c4befb560"
+                            "value": "@@MngEnvMCAP899704.onmicrosoft.com"
                         }
                     ]
                 }
@@ -655,7 +619,7 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
                         {
                             "name": "PRIV UPN",
                             "type": "string",
-                            "value": "@{variables('AdminNamingConvention')}@{body('Parse_User_details')?['mailNickname']}@MngEnvMCAP899704.onmicrosoft.com"
+                            "value": "@{variables('AdminUPNNamingConvention')}@{body('Parse_User_details')?['mailNickname']}@{variables('Onmicrosoftdomain')}"
                         }
                     ]
                 }
