@@ -35,7 +35,9 @@ Custom extensions can be used to:
 **Example Use Cases:**  
 - Automatically send a welcome package request to HR when a new employee is onboarded.  
 - Call an external API to disable accounts in a legacy system during offboarding.  
-- Trigger a workflow to update a badge access system when a user changes departments.  
+- Trigger a workflow to update a badge access system when a user changes departments.
+
+**📖 [View Lifecycle Workflow Custom Extensions Guide](./LifeCycle%20Workflow/LifeCycle%20Workflow%20Directory.md)**  
 
 ---
 
@@ -51,14 +53,16 @@ Custom extensions can enhance this by:
 **Example Use Cases:**  
 - Require an external risk check before approving access to sensitive applications.  
 - Notify a manager via a custom system when an access package is assigned.  
-- Record entitlement decisions in a custom database for audit purposes.  
+- Record entitlement decisions in a custom database for audit purposes.
+
+**📖 [View Entitlement Management Custom Extensions Guide](./Entitlement%20Management/Entitlement%20Management%20Directory.md)**  
 
 ---
 
 ## 🚀 Getting Started
 
 1. Browse the template examples in this repository.  
-2. Adapt them to your organization’s needs.  
+2. Adapt them to your organization's needs.  
 3. Test thoroughly in **non-production environments**.  
 4. Do not use these templates directly in production without proper validation.  
 
