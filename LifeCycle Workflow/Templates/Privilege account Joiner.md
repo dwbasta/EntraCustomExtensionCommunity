@@ -81,13 +81,6 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
 
 4. Click **Save** to apply the mappings
 
-
-#### Step 4: Get the API Endpoint URL
-
-1. In the **Provisioning** section, note the **Provisioning API Endpoint**
-2. Format: `https://graph.microsoft.com/v1.0/servicePrincipals/{servicePrincipalId}/synchronization/jobs/{jobId}/bulkUpload`
-3. Save this URL - you'll need it in your custom extension
-
 ---
 
 ## Part 2: Creating a Blank Custom Extension for Lifecycle Workflows
@@ -651,6 +644,12 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
 2. Verify all actions and triggers are displayed correctly
 3. Check for any warning or error icons on actions
 4. Expand each action to confirm configuration is correct
+
+### Step 9: Update the variable step
+1.) Employee id naming convention for Admins
+2.) Employee UPN naming convention for Admins
+3.) Onmicrosoft Cloud UPN
+4.) The API provisioning url found Under the API Enterprise app --> Provisioning --> Under Technical information --> Provisioning API Endpoint
 
 
 > **Tip**: If you're importing a workflow from another environment, make sure to update any environment-specific values such as:
