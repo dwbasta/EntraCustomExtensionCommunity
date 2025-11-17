@@ -704,6 +704,12 @@ $AppRole = $graphApp.AppRoles | Where-Object {$_.Value -eq $PermissionName -and 
 $managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-joiner-extension'"
 New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrincipalId $managedID.Id -ResourceId $graphApp.Id -AppRoleId $AppRole.Id
 
+###For Manager Add
+$PermissionName = "User.ReadWrite.All"
+$AppRole = $graphApp.AppRoles | Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}
+$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-joiner-extension'"
+New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrincipalId $managedID.Id -ResourceId $graphApp.Id -AppRoleId $AppRole.Id
+
 ```
 
 For this custom extension to work, the managed identity needs:
