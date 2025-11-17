@@ -590,12 +590,12 @@ Using the Inbound API Provisioning Service for privileged accounts offers severa
                         {
                             "name": "APIURL",
                             "type": "string",
-                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/efbf203f-08b0-4ad1-872c-cfe21cfb7580/synchronization/jobs/API2AAD.e0e1f74aa30042c6a65c917c4befb560.5de63f34-e2d0-442f-9f52-85c6a6b91d76/bulkUpload"
+                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/SomeRandomnumber/synchronization/jobs/API2AAD.Aaaaaaaaaaaaaaaaaaa.11111111111111111/bulkUpload"
                         },
                         {
                             "name": "Onmicrosoftdomain",
                             "type": "string",
-                            "value": "@@MngEnvMCAP899704.onmicrosoft.com"
+                            "value": "@@SOMEDOMAIN.onmicrosoft.com"
                         }
                     ]
                 }
