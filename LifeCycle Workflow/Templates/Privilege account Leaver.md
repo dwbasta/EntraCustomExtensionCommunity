@@ -292,7 +292,7 @@ Your Logic App JSON should follow this structure:
                 },
                 "type": "Http",
                 "inputs": {
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('Parse_User_attributes')?['onPremisesExtensionAttributes']?['extensionAttribute15']}?$select=displayname,ID",
+                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('Parse_User_attributes')?['onPremisesExtensionAttributes']?['extensionAttribute15']}?$select=displayname,employeeId",
                     "method": "GET",
                     "authentication": {
                         "type": "ManagedServiceIdentity",
@@ -315,12 +315,18 @@ Your Logic App JSON should follow this structure:
                 "inputs": {
                     "content": "@body('Get_Linked_Account_Details')",
                     "schema": {
+                        "type": "object",
                         "properties": {
-                            "id": {
+                            "@@odata.context": {
+                                "type": "string"
+                            },
+                            "displayName": {
+                                "type": "string"
+                            },
+                            "employeeId": {
                                 "type": "string"
                             }
-                        },
-                        "type": "object"
+                        }
                     }
                 }
             },
@@ -335,17 +341,26 @@ Your Logic App JSON should follow this structure:
                     "uri": "@variables('APIURL')",
                     "method": "POST",
                     "headers": {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/scim+json"
                     },
                     "body": {
                         "Operations": [
                             {
-                                "bulkId": "@{body('Parse_PRIV_ID')?['id']}",
+                                "bulkId": "@{body('Parse_PRIV_ID')?['employeeId']}",
                                 "data": {
-                                    "externalId": "@{body('Parse_PRIV_ID')?['id']}",
-                                    "accountEnabled": false
-                                }
+                                    "externalId": "@{body('Parse_PRIV_ID')?['employeeId']}",
+                                    "schemas": [
+                                        "urn:ietf:params:scim:schemas:core:2.0:User",
+                                        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+                                    ],
+                                    "active": false
+                                },
+                                "method": "POST",
+                                "path": "/Users"
                             }
+                        ],
+                        "schemas": [
+                            "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
                         ]
                     },
                     "authentication": {
@@ -367,7 +382,7 @@ Your Logic App JSON should follow this structure:
                         {
                             "name": "APIURL",
                             "type": "string",
-                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/efbf203f-08b0-4ad1-872c-cfe21cfb7580/synchronization/jobs/API2AAD.e0e1f74aa30042c6a65c917c4befb560.5de63f34-e2d0-442f-9f52-85c6a6b91d76/bulkUpload"
+                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/ramndomnumbers/synchronization/jobs/API2AAD.aaaaaaaaaaaaaaaaaaaaa.1111111111111111111111/bulkUpload"
                         }
                     ]
                 }
@@ -397,6 +412,10 @@ Your Logic App JSON should follow this structure:
 2. Verify all actions and triggers are displayed correctly
 3. Check for any warning or error icons on actions
 4. Expand each action to confirm configuration is correct
+
+#### Step 9: Update variables
+1.) Click on the Set-APIURL step
+2.) Put your api link in this section (found Under the API Enterprise app --> Provisioning --> Under Technical information --> Provisioning API Endpoint)
 
 ---
 
