@@ -115,3 +115,5 @@ The privileged account update pattern relies on a correlation between user and p
 📄 **[Privileged Account Mover Template](./Templates/Privilege%20account%20Mover.md)**
 
 ## 3.) Leaver Setup
+
+📄 **[Privileged Account Leaver Template](./Templates/Privilege%20account%20Leaver.md)**

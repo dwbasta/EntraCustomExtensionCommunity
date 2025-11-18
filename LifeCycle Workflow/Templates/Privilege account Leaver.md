@@ -1,15 +1,15 @@
-# Privileged Account Mover - Lifecycle Workflow Custom Extension
+# Privileged Account Leaver - Lifecycle Workflow Custom Extension
 
-This template demonstrates how to automatically update privileged admin accounts when users change roles, departments, or other attributes using Lifecycle Workflows custom extensions and the Inbound API Provisioning service.
+This template demonstrates how to automatically offboard privileged admin accounts when users leave the organization or no longer require elevated access using Lifecycle Workflows custom extensions and the Inbound API Provisioning service.
 
 ---
 
 ## Overview
 
 This solution uses:
-- **Lifecycle Workflows** to detect when a user's attributes change
-- **Custom Extension** to trigger the update logic
-- **Inbound API Provisioning Service** to update admin account attributes
+- **Lifecycle Workflows** to detect when a user leaves or loses privileged access
+- **Custom Extension** to trigger the offboarding logic
+- **Inbound API Provisioning Service** to disable and manage admin account lifecycle
 - **Managed Identity** for secure, credential-free authentication
 
 ---
@@ -17,33 +17,36 @@ This solution uses:
 ## Architecture
 
 ```
-User Attribute Changes → LCW Mover Workflow → Custom Extension → Logic App
-                                                                      ↓
-                                                            Managed Identity
-                                                                      ↓
-                                                  Inbound API Provisioning Service
-                                                                      ↓
-                                                    Update Privileged Account
+User Leaves Organization → LCW Leaver Workflow → Custom Extension → Logic App
+                                                                        ↓
+                                                              Managed Identity
+                                                                        ↓
+                                                    Inbound API Provisioning Service
+                                                                        ↓
+                                                      Disable Privileged Account
 ```
 
 ---
 
 
-### Why Use It for Admin Account Updates?
+### Why Use API Provisioning Service for Admin Account Offboarding?
 
-Using the Inbound API Provisioning Service for privileged account updates offers several advantages:
+Using the Inbound API Provisioning Service for privileged account offboarding offers several advantages:
 
-1. **Consistent Updates**: All admin account changes flow through a single, auditable service
-2. **Attribute Transformation**: Apply business rules during attribute synchronization
-3. **Correlation Management**: Reliably match user accounts to their privileged accounts
-4. **Compliance**: Built-in logging meets audit requirements for privileged account modifications
-5. **Idempotency**: The service handles duplicate update requests gracefully
+1. **Secure Deactivation**: Immediate account disablement through audited service
+2. **Compliance Logging**: All offboarding actions are logged for audit requirements
+3. **Retention Management**: Support for deferred deletion based on organizational policies
+4. **Centralized Process**: All admin account offboarding flows through single service
+5. **Rollback Safety**: Ability to track and potentially reverse actions if needed
+
+### Setting Up the Inbound API Provisioning Application
 
 >[!Note]
 > Please refer to the 📄 **[Privileged Account Joiner Template](./Templates/Privilege%20account%20Joiner.md)** for inbound API provisioning setup 
 
 >[!Important]
 > The Api provisioning will only work on the privilege accounts that are in an eligable state. If the Active account has an assigned access on credentials check out the custom extention will need higher privilege and can not use the API provisioning service.
+
 
 ---
 
@@ -58,8 +61,8 @@ Using the Inbound API Provisioning Service for privileged account updates offers
 
 ### Step 2: Configure Basic Settings
 
-1. **Name**: Enter `Admin-Account-Mover-Extension`
-2. **Description**: Enter `Updates privileged admin accounts when user attributes change`
+1. **Name**: Enter `Admin-Account-Leaver-Extension`
+2. **Description**: Enter `Offboards privileged admin accounts for leavers`
 3. Click **Next**
 
 ### Step 3: Configure Endpoint Details
@@ -67,7 +70,7 @@ Using the Inbound API Provisioning Service for privileged account updates offers
 1. **Endpoint configuration**: Select **Create new Logic App**
 2. **Subscription**: Select your Azure subscription
 3. **Resource Group**: Select existing or create new resource group
-4. **Logic App Name**: Enter `lcw-admin-mover-extension`
+4. **Logic App Name**: Enter `lcw-admin-leaver-extension`
 5. **Region**: Select your preferred Azure region
 6. Click **Create Logic App**
 
@@ -83,7 +86,7 @@ Using the Inbound API Provisioning Service for privileged account updates offers
 ### Step 5: Verify Logic App Creation
 
 1. Once created, navigate to **Azure Portal** → **Logic Apps**
-2. Find your Logic App: `lcw-admin-mover-extension`
+2. Find your Logic App: `lcw-admin-leaver-extension`
 3. Open the Logic App and click **Logic app designer**
 4. You should see a blank HTTP trigger already configured with:
    - Trigger: **When a HTTP request is received**
@@ -95,9 +98,11 @@ Using the Inbound API Provisioning Service for privileged account updates offers
 1. In the Logic App, click **Code view** (next to the Designer button in the top toolbar)
 2. You'll see the current workflow definition in JSON format
 3. This is where you can import a pre-built workflow definition
+4. Paste the following json into the Code view replacing the json
 
-### Step 7: Import Logic App JSON Workflow
+#### Sample JSON Structure
 
+Your Logic App JSON should follow this structure:
 
 ```
 
@@ -234,20 +239,20 @@ Using the Inbound API Provisioning Service for privileged account updates offers
             }
         },
         "actions": {
-            "Get_Manager": {
+            "Get_Linked_account": {
                 "runAfter": {
-                    "Get_Users_data": [
+                    "SET-APIURL": [
                         "Succeeded"
                     ]
                 },
                 "type": "Http",
                 "inputs": {
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    },
+                    "uri": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['userPrincipalName']}?$select=displayName,onPremisesExtensionAttributes",
                     "method": "GET",
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['userPrincipalName']}?$expand=manager"
+                    "authentication": {
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://graph.microsoft.com"
+                    }
                 },
                 "runtimeConfiguration": {
                     "contentTransfer": {
@@ -255,157 +260,17 @@ Using the Inbound API Provisioning Service for privileged account updates offers
                     }
                 }
             },
-            "Get_Users_data": {
+            "Parse_User_attributes": {
                 "runAfter": {
-                    "Set-APIURL": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    },
-                    "method": "GET",
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['userPrincipalName']}?$select=displayName,onPremisesExtensionAttributes,department,jobTitle"
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "Get_priv_ID_info": {
-                "runAfter": {
-                    "Manager_PARSE_EDIT": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    },
-                    "method": "GET",
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}?$select=displayName,employeeId"
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "Manager_PARSE_EDIT": {
-                "runAfter": {
-                    "User_Data_Parse": [
+                    "Get_Linked_account": [
                         "Succeeded"
                     ]
                 },
                 "type": "ParseJson",
                 "inputs": {
-                    "content": "@body('Get_Manager')",
+                    "content": "@body('Get_Linked_account')",
                     "schema": {
                         "properties": {
-                            "givenName": {
-                                "type": "string"
-                            },
-                            "manager": {
-                                "properties": {
-                                    "employeeId": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "surname": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    }
-                }
-            },
-            "Set-APIURL": {
-                "runAfter": {},
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
-                        {
-                            "name": "APIURL",
-                            "type": "string",
-                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/randomnumbers/synchronization/jobs/API2AAD.aaaaaaaaaaaaaaaaaaaa.1111111111111111/bulkUpload"
-                        }
-                    ]
-                }
-            },
-            "Update_Priv_SCIM_": {
-                "runAfter": {
-                    "parse_Priv_user": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    },
-                    "body": {
-                        "Operations": [
-                            {
-                                "bulkId": "@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}",
-                                "data": {
-                                    "displayName": "@{body('parse_Priv_user')?['displayName']}",
-                                    "externalId": "@{body('parse_Priv_user')?['employeeId']}",
-                                    "name": {
-                                        "familyName": "@{body('Manager_PARSE_EDIT')?['surname']}",
-                                        "givenName": "@{body('Manager_PARSE_EDIT')?['givenName']}"
-                                    },
-                                    "schemas": [
-                                        "urn:ietf:params:scim:schemas:core:2.0:User",
-                                        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
-                                    ],
-                                    "title": "@body('User_Data_Parse')?['jobTitle']"
-                                },
-                                "method": "POST",
-                                "path": "/Users"
-                            }
-                        ],
-                        "schemas": [
-                            "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
-                        ]
-                    },
-                    "headers": {
-                        "Content-Type": "application/scim+json"
-                    },
-                    "method": "POST",
-                    "uri": "@variables('APIURL')"
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "User_Data_Parse": {
-                "runAfter": {
-                    "Get_Manager": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "ParseJson",
-                "inputs": {
-                    "content": "@body('Get_Users_data')",
-                    "schema": {
-                        "properties": {
-                            "department": {
-                                "type": "string"
-                            },
-                            "jobTitle": {
-                                "type": "string"
-                            },
                             "onPremisesExtensionAttributes": {
                                 "properties": {
                                     "extensionAttribute15": {
@@ -419,21 +284,39 @@ Using the Inbound API Provisioning Service for privileged account updates offers
                     }
                 }
             },
-            "parse_Priv_user": {
+            "Get_Linked_Account_Details": {
                 "runAfter": {
-                    "Get_priv_ID_info": [
+                    "Parse_User_attributes": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http",
+                "inputs": {
+                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('Parse_User_attributes')?['onPremisesExtensionAttributes']?['extensionAttribute15']}?$select=displayname,ID",
+                    "method": "GET",
+                    "authentication": {
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://graph.microsoft.com"
+                    }
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                }
+            },
+            "Parse_PRIV_ID": {
+                "runAfter": {
+                    "Get_Linked_Account_Details": [
                         "Succeeded"
                     ]
                 },
                 "type": "ParseJson",
                 "inputs": {
-                    "content": "@body('Get_priv_ID_info')",
+                    "content": "@body('Get_Linked_Account_Details')",
                     "schema": {
                         "properties": {
-                            "displayName": {
-                                "type": "string"
-                            },
-                            "employeeId": {
+                            "id": {
                                 "type": "string"
                             }
                         },
@@ -441,31 +324,52 @@ Using the Inbound API Provisioning Service for privileged account updates offers
                     }
                 }
             },
-            "update_manager": {
+            "Disable_Priv_ID": {
                 "runAfter": {
-                    "Update_Priv_SCIM_": [
+                    "Parse_PRIV_ID": [
                         "Succeeded"
                     ]
                 },
                 "type": "Http",
                 "inputs": {
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    },
-                    "body": {
-                        "@@odata.id": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['manager']?['id']}"
-                    },
+                    "uri": "@variables('APIURL')",
+                    "method": "POST",
                     "headers": {
                         "Content-Type": "application/json"
                     },
-                    "method": "PUT",
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}/manager/$ref"
+                    "body": {
+                        "Operations": [
+                            {
+                                "bulkId": "@{body('Parse_PRIV_ID')?['id']}",
+                                "data": {
+                                    "externalId": "@{body('Parse_PRIV_ID')?['id']}",
+                                    "accountEnabled": false
+                                }
+                            }
+                        ]
+                    },
+                    "authentication": {
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://graph.microsoft.com"
+                    }
                 },
                 "runtimeConfiguration": {
                     "contentTransfer": {
                         "transferMode": "Chunked"
                     }
+                }
+            },
+            "SET-APIURL": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "APIURL",
+                            "type": "string",
+                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/efbf203f-08b0-4ad1-872c-cfe21cfb7580/synchronization/jobs/API2AAD.e0e1f74aa30042c6a65c917c4befb560.5de63f34-e2d0-442f-9f52-85c6a6b91d76/bulkUpload"
+                        }
+                    ]
                 }
             }
         },
@@ -485,10 +389,7 @@ Using the Inbound API Provisioning Service for privileged account updates offers
     }
 }
 
-
 ```
-
-> **Important**: Ensure your JSON is valid. The Logic App will validate the syntax when you save. If there are errors, they will be displayed at the bottom of the code view.
 
 ### Step 8: Verify the Import
 
@@ -496,6 +397,8 @@ Using the Inbound API Provisioning Service for privileged account updates offers
 2. Verify all actions and triggers are displayed correctly
 3. Check for any warning or error icons on actions
 4. Expand each action to confirm configuration is correct
+
+---
 
 ## Part 3: Enabling Managed Identity
 
@@ -513,7 +416,7 @@ Benefits:
 
 #### Using Azure Portal
 
-1. Open your Logic App: `lcw-admin-mover-extension`
+1. Open your Logic App: `lcw-admin-leaver-extension`
 2. Navigate to **Settings** → **Identity**
 3. Under **System assigned** tab:
    - Toggle **Status** to **On**
@@ -522,45 +425,45 @@ Benefits:
 4. Once enabled, an **Object (principal) ID** will be displayed
 5. **Copy this Object ID** - you'll need it for permission assignment
 
----
 
-## Part 2: Assigning Permissions to Managed Identity
+## Part 4: Assigning Permissions to Managed Identity
 
 ### Required Permissions
 
 For this custom extension to work, the managed identity needs:
 
-1. **SynchronizationData-User.Upload**: To send updated user data to the Inbound API Provisioning Service
-2. **User.ReadWrite.All**: To read user attributes from the source user account
-3. **AuditLog.Read.All**: To read audit logs for verification and troubleshooting
+1. **SynchronizationData-User.Upload**: To send deprovisioning data to the Inbound API Provisioning Service
+2. **User.ReadWrite.All**: To read user attributes and verify account status
+3. **AuditLog.Read.All**: To read audit logs for verification and compliance
 
 ### PowerShell Script to Grant Permissions
 
 ```
- Install-Module Microsoft.Graph -Scope CurrentUser
+
+Install-Module Microsoft.Graph -Scope CurrentUser
 
 Connect-MgGraph -Scopes "Application.Read.All","AppRoleAssignment.ReadWrite.All,RoleManagement.ReadWrite.Directory"
 $graphApp = Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'"
 
 $PermissionName = "SynchronizationData-User.Upload"
 $AppRole = $graphApp.AppRoles | Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}
-$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-mover-extension'"
+$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-leaver-extension'"
 New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrincipalId $managedID.Id -ResourceId $graphApp.Id -AppRoleId $AppRole.Id
 
 $PermissionName = "ProvisioningLog.Read.All"
 $AppRole = $graphApp.AppRoles | Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}
-$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-mover-extension'"
+$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-leaver-extension'"
 New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrincipalId $managedID.Id -ResourceId $graphApp.Id -AppRoleId $AppRole.Id
 
 ###For Manager Add and attribute read of user account
 $PermissionName = "User.ReadWrite.All"
 $AppRole = $graphApp.AppRoles | Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}
-$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-mover-extension'"
+$managedID = Get-MgServicePrincipal -Filter "DisplayName eq 'lcw-admin-leaver-extension'"
 New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrincipalId $managedID.Id -ResourceId $graphApp.Id -AppRoleId $AppRole.Id
 
 ```
 
-## Part 5: Creating the Mover Lifecycle Workflow
+## Part 5: Creating the Leaver Lifecycle Workflow
 
 ### Step 1: Navigate to Lifecycle Workflows
 
@@ -570,48 +473,58 @@ New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrinc
 
 ### Step 2: Configure Workflow Basics
 
-1. **Category**: Select **Joiner, Leaver, Mover** or **Mover**
-2. **Name**: Enter `Privileged Account Attribute Sync`
-3. **Description**: Enter `Synchronizes attribute changes from user accounts to privileged admin accounts`
+1. **Category**: Select **Leaver**
+2. **Name**: Enter `Privileged Account Offboarding`
+3. **Description**: Enter `Disables and offboards privileged admin accounts when users leave`
 4. Click **Next**
 
 ### Step 3: Configure Execution Conditions
 
-1. **Trigger type**: Select **Attribute changes**
-2. **Attributes to monitor**:
-   - `department`
-   - `jobTitle`
-   - `officeLocation`
-   - `manager`
-   - `employeeType`
-3. **Scope**: Select specific groups or all users with privileged accounts
-4. **Rule**: Add rule to only include users who have correlated admin accounts
+#### Trigger Configuration
+
+1. **Trigger type**: Select one of the following:
+   - **Employee leaves the organization** (triggered by `employeeLeaveDateTime`)
+   - **User account disabled** (triggered when `accountEnabled = false`)
+   - **Group membership removed** (when removed from privileged access group)
+
+2. **Timing**: 
+   - For employee leave: Execute on or before leave date
+   - For account disable: Execute immediately
+   - For group removal: Execute within 1 hour
+
+#### Scope Configuration
+
+1. **Scope**: Select users with privileged accounts
+2. **Rule expression**: Add rule to target only privileged account holders
    - Example: `extensionAttribute15 -eq "HasAdminAccount"`
-5. Click **Next**
+   - Or: Member of group "Privileged-Account-Holders"
+3. Click **Next**
 
 ### Step 4: Configure Tasks
 
-1. Click **Add task**
-2. Under **Custom tasks**, select your custom extension: `Admin-Account-Mover-Extension`
-3. **Task name**: Enter `Update Privileged Account Attributes`
-4. **Description**: Enter `Calls Logic App to synchronize attributes to admin account`
-5. Click **Add**
-6. Click **Next**
+#### Custom Extension Task
+
+1. Click **Add task** → **Custom tasks**
+2. Select your custom extension: `Admin-Account-Leaver-Extension`
+3. **Task name**: Enter `Offboard Privileged Account`
+4. **Description**: Enter `Disables and removes privileges from admin account`
+5. **Run order**: After built-in tasks
+6. Click **Add**
+7. Click **Next**
 
 ### Step 5: Review and Create
 
 1. Review the workflow configuration
-2. **Enable workflow**: Toggle to **Yes** to activate immediately
+2. **Enable workflow**: Toggle to **Yes** to activate immediately (or **No** for testing)
 3. Click **Create**
 
 ### Step 6: Test the Workflow
 
-1. Select a test user who has a privileged account
-2. Update one of the monitored attributes (e.g., change department)
-3. Navigate to **Lifecycle Workflows** → **Workflows** → **Privileged Account Attribute Sync**
-4. Click **Workflow history** to monitor execution
-5. Verify the custom extension was called successfully
-6. Check the privileged account to confirm attributes were updated
+#### Run On-Demand
 
----
+1. Navigate to **Lifecycle Workflows** → **Workflows** → **Privileged Account Offboarding**
+2. Click **Run on demand**
+3. Select a test user
+4. Click **Run workflow**
+5. Monitor execution in **Workflow history**
 
