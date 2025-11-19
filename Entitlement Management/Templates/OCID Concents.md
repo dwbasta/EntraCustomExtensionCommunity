@@ -17,7 +17,7 @@ This solution uses:
 
 ## Architecture
 
-```
+
 Access Package Request → Entitlement Management → Custom Extension → Logic App
                                                                           ↓
                                                                 Managed Identity
@@ -29,9 +29,7 @@ Access Package Request → Entitlement Management → Custom Extension → Logic
                                                           Request ODIC User Consent
                                                                           ↓
                                                         Log Consent Response
-```
 
----
 
 ## Part 1: External Data Source for Consent Correlation
 
@@ -54,6 +52,7 @@ You can use any of the following data sources to store the consent correlation d
 4. Or you own homegrown solution
 
 ### Creating the Azure Tbale
+
 ```
 # Variables#
 $resourceGroup = MyResourceGroupn"
@@ -89,6 +88,12 @@ with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
 
 ````
 
+### Selecting an Application to test
+1. Find your application for instance ([Virus Total](https://www.virustotal.com/gui/sign-in))
+2. Sing in with your test account. View the ODIC application concents and accept these values
+3. Go to the enterprise application blade in entra and find Virus total (VT SSO)
+4. **Permissions** on the Left side. Then **User concents** and view the recorded permissions. Save these for later will need it when filling out the blob storage
+
 
 ## Part 1: Creating a Custom Extension in Entitlement Management
 
@@ -120,6 +125,7 @@ with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
 4. Click **Save**
 
 ```
+
 {
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
@@ -648,36 +654,30 @@ Write-Host "Granted Storage Table Data Reader access" -ForegroundColor Green
 3. select another **Stage**: and select **Assignment is removed**
 4. Click **Save**
 
+---
 
+## Part 9: Add the VT SSO Enterprise Application to the Access Package
 
-### Step 4: Test the Configuration
+### Step 1: Navigate to the Access Package
 
-1. Request the access package (as a test user or yourself)
-2. After approval, the custom extension should trigger
-3. Check Logic App run history for execution details
-4. Verify consent request is sent to user by viewing the odic application and looking at the permissions
-ble Data Reader access" -ForegroundColor Green
+1. Open **Entra ID Admin Center** ([https://entra.microsoft.com](https://entra.microsoft.com))
+2. Navigate to **Identity Governance** → **Entitlement Management**
+3. Click **Catalogs** and select the catalog containing your access package
+4. Click **Access packages**
+5. Select the access package you want to modify (or the one you just configured with the custom extension)
 
-```
+### Step 2: Add Resource to Access Package
 
-## Part 8: Configuring Access Packages to Use Custom Extension
+1. In the access package details, click **Resource roles** in the left navigation
+2. Click **+ Add resource roles**
+3. In the **Select resource type** dropdown, select **Applications**
 
-### Step 1: Navigate to Access Package
+### Step 3: Select the Enterprise Application
 
-1. In **Entra ID Admin Center**, go to **Identity Governance** → **Entitlement Management**
-2. Click **Access packages**
-3. Select the access package you want to add consent requirements to
+1. In the **Select application** search box, type the name of your VT SSO enterprise application
+2. Click on the application from the search results to select it
+3. The application details will appear on the right side
 
-### Step 2: Edit Access Package Policy
+## Adding the Access package id and permissions blob table
 
-1. Click on the policy you want to modify (or create a new one)
-2. Scroll to **Custom extensions** section
-3. Click **Add custom extension**
-
-### Step 3: Configure Custom Extension for Policy
-
-1. **Select custom extension**: Choose `OCID-Consent-Extension`
-2. **Stage**: is **Assignment is granted** 
-3. select another **Stage**: and select **Assignment is removed**
-4. Click **Save**
-
+coming soon
