@@ -50,8 +50,45 @@ Using an external data source to correlate access packages to consent requiremen
 You can use any of the following data sources to store the consent correlation data:
 1. Blob Tables -- what this Custom extention is going to use.
 2. CSV file
-3. MSSQL with On premise Data Gateway
+3. MSSQL with Onpremise Data Gateway
 4. Or you own homegrown solution
+
+### Creating the Azure Tbale
+```
+# Variables#
+$resourceGroup = MyResourceGroupn"
+$location      = "EastUS"
+$storageName   mystoragesta$(Get-Random)"   # must be globally unique and all lower case and numbers
+$tableName     = "odiclookupGovernance"
+$tenantid   "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"   # <-- your Tenant ID here
+
+
+# Login to Azure
+Connect-AzAccount -Tenant $tenantId
+
+# Create Resource Group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create Storage Account
+New-AzStorageAccount `
+    -ResourceGroupName $resourceGroup `
+    -Name $storageName `
+    -Location $location `
+    -SkuName Standard_LRS `
+    -Kind StorageV2
+
+# Get Storage Account context
+$ctx = New-AzStorageContext -StorageAccountName $storageName -UseConnectedAccount
+
+# Create Table
+New-AzStorageTable -Name $tableName -Context $ctx
+
+Write-Host "Storage account '$storageName' created P## Turn off Application concent
+
+with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
+
+````
+
 
 ## Part 1: Creating a Custom Extension in Entitlement Management
 
@@ -72,13 +109,8 @@ You can use any of the following data sources to store the consent correlation d
 5. **Details** Create logic app Yes then Select your subscription, Resource group and logic app name `entitlement-consent-extension`
 6. **Create a logic app** then review and create to finish
 
-### Step 3: Switch to Code View for JSON Import
 
-1. In the Logic App, click **Code view** (next to the Designer button)
-2. You'll see the current workflow definition in JSON format
-3. This is where you can import the complete workflow definition
-
-### Step 4: Import Logic App JSON Workflow
+### Step 3: Import Logic App JSON Workflow
 
 #### Option A: Replace Entire Workflow Definition
 
@@ -98,276 +130,171 @@ You can use any of the following data sources to store the consent correlation d
                 "kind": "Http",
                 "inputs": {
                     "schema": {
+                        "type": "object",
                         "properties": {
-                            "data": {
+                            "AccessPackageAssignmentRequestId": {
+                                "type": "string"
+                            },
+                            "CallbackUriPath": {
+                                "type": "string"
+                            },
+                            "CustomExtensionStageInstanceId": {
+                                "type": "string"
+                            },
+                            "Stage": {
+                                "type": "string"
+                            },
+                            "RequestType": {
+                                "type": "string"
+                            },
+                            "Answers": {
+                                "type": "array"
+                            },
+                            "State": {
+                                "type": "string"
+                            },
+                            "Status": {
+                                "type": "string"
+                            },
+                            "CallbackConfiguration": {
+                                "type": "object",
                                 "properties": {
-                                    "callbackUriPath": {
-                                        "description": "CallbackUriPath used for Resume Action",
-                                        "title": "Data.CallbackUriPath",
+                                    "DurationBeforeTimeout": {
                                         "type": "string"
-                                    },
-                                    "subject": {
-                                        "properties": {
-                                            "displayName": {
-                                                "description": "DisplayName of the Subject",
-                                                "title": "Subject.DisplayName",
-                                                "type": "string"
-                                            },
-                                            "email": {
-                                                "description": "Email of the Subject",
-                                                "title": "Subject.Email",
-                                                "type": "string"
-                                            },
-                                            "id": {
-                                                "description": "Id of the Subject",
-                                                "title": "Subject.Id",
-                                                "type": "string"
-                                            },
-                                            "manager": {
-                                                "properties": {
-                                                    "displayName": {
-                                                        "description": "DisplayName parameter for Manager",
-                                                        "title": "Manager.DisplayName",
-                                                        "type": "string"
-                                                    },
-                                                    "email": {
-                                                        "description": "Mail parameter for Manager",
-                                                        "title": "Manager.Mail",
-                                                        "type": "string"
-                                                    },
-                                                    "id": {
-                                                        "description": "Id parameter for Manager",
-                                                        "title": "Manager.Id",
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "userPrincipalName": {
-                                                "description": "UserPrincipalName of the Subject",
-                                                "title": "Subject.UserPrincipalName",
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "task": {
-                                        "properties": {
-                                            "displayName": {
-                                                "description": "DisplayName for Task Object",
-                                                "title": "Task.DisplayName",
-                                                "type": "string"
-                                            },
-                                            "id": {
-                                                "description": "Id for Task Object",
-                                                "title": "Task.Id",
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "taskProcessingResult": {
-                                        "properties": {
-                                            "createdDateTime": {
-                                                "description": "CreatedDateTime for TaskProcessingResult Object",
-                                                "title": "TaskProcessingResult.CreatedDateTime",
-                                                "type": "string"
-                                            },
-                                            "id": {
-                                                "description": "Id for TaskProcessingResult Object",
-                                                "title": "TaskProcessingResult.Id",
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    },
-                                    "workflow": {
-                                        "properties": {
-                                            "displayName": {
-                                                "description": "DisplayName for Workflow Object",
-                                                "title": "Workflow.DisplayName",
-                                                "type": "string"
-                                            },
-                                            "id": {
-                                                "description": "Id for Workflow Object",
-                                                "title": "Workflow.Id",
-                                                "type": "string"
-                                            },
-                                            "workflowVerson": {
-                                                "description": "WorkflowVersion for Workflow Object",
-                                                "title": "Workflow.WorkflowVersion",
-                                                "type": "integer"
-                                            }
-                                        },
-                                        "type": "object"
                                     }
-                                },
-                                "type": "object"
+                                }
                             },
-                            "source": {
-                                "description": "Context in which an event happened",
-                                "title": "Request.Source",
-                                "type": "string"
+                            "AccessPackage": {
+                                "type": "object",
+                                "properties": {
+                                    "Id": {
+                                        "type": "string",
+                                        "description": "AccessPackage-Id"
+                                    },
+                                    "DisplayName": {
+                                        "type": "string",
+                                        "description": "AccessPackage-DisplayName"
+                                    },
+                                    "Description": {
+                                        "type": "string",
+                                        "description": "AccessPackage-Description"
+                                    }
+                                }
                             },
-                            "type": {
-                                "description": "Value describing the type of event related to the originating occurrence.",
-                                "title": "Request.Type",
-                                "type": "string"
+                            "AccessPackageCatalog": {
+                                "type": "object",
+                                "properties": {
+                                    "Id": {
+                                        "type": "string",
+                                        "description": "AccessPackageCatalog-Id"
+                                    },
+                                    "DisplayName": {
+                                        "type": "string",
+                                        "description": "AccessPackageCatalog-DisplayName"
+                                    },
+                                    "Description": {
+                                        "type": "string",
+                                        "description": "AccessPackageCatalog-Description"
+                                    }
+                                }
+                            },
+                            "Assignment": {
+                                "type": "object",
+                                "properties": {
+                                    "Id": {
+                                        "type": "string",
+                                        "description": "Assignment-Id"
+                                    },
+                                    "Target": {
+                                        "type": "object",
+                                        "properties": {
+                                            "ConnectedOrganization": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "Id": {
+                                                        "type": "string",
+                                                        "description": "Assignment-Target-ConnectedOrganization-Id"
+                                                    },
+                                                    "DisplayName": {
+                                                        "type": "string",
+                                                        "description": "Assignment-Target-ConnectedOrganization-DisplayName"
+                                                    },
+                                                    "Description": {
+                                                        "type": "string",
+                                                        "description": "Assignment-Target-ConnectedOrganization-Description"
+                                                    }
+                                                }
+                                            },
+                                            "Id": {
+                                                "type": "string",
+                                                "description": "Assignment-Target-Id"
+                                            },
+                                            "ObjectId": {
+                                                "type": "string",
+                                                "description": "Assignment-Target-ObjectId"
+                                            },
+                                            "DisplayName": {
+                                                "type": "string",
+                                                "description": "Assignment-Target-DisplayName"
+                                            }
+                                        }
+                                    },
+                                    "State": {
+                                        "type": "string",
+                                        "description": "Assignment-State"
+                                    },
+                                    "Status": {
+                                        "type": "string",
+                                        "description": "Assignment-Status"
+                                    },
+                                    "AssignmentPolicy": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Id": {
+                                                "type": "string",
+                                                "description": "AssignmentPolicy-Id"
+                                            },
+                                            "DisplayName": {
+                                                "type": "string",
+                                                "description": "AssignmentPolicy-DisplayName"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "Requestor": {
+                                "type": "object",
+                                "properties": {
+                                    "Id": {
+                                        "type": "string",
+                                        "description": "Requestor-Id"
+                                    },
+                                    "ObjectId": {
+                                        "type": "string",
+                                        "description": "Requestor-ObjectId"
+                                    },
+                                    "DisplayName": {
+                                        "type": "string",
+                                        "description": "Requestor-DisplayName"
+                                    }
+                                }
                             }
-                        },
-                        "type": "object"
+                        }
                     }
-                }
+                },
+                "operationOptions": "IncludeAuthorizationHeadersInOutputs"
             }
         },
         "actions": {
-            "Get_Manager": {
-                "runAfter": {
-                    "Get_Users_data": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['userPrincipalName']}?$expand=manager",
-                    "method": "GET",
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    }
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "Get_Users_data": {
-                "runAfter": {
-                    "Set-APIURL": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['userPrincipalName']}?$select=displayName,onPremisesExtensionAttributes,department,jobTitle",
-                    "method": "GET",
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    }
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "Get_priv_ID_info": {
-                "runAfter": {
-                    "Manager_PARSE_EDIT": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}?$select=displayName,employeeId",
-                    "method": "GET",
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    }
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
-            },
-            "Manager_PARSE_EDIT": {
-                "runAfter": {
-                    "User_Data_Parse": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "ParseJson",
-                "inputs": {
-                    "content": "@body('Get_Manager')",
-                    "schema": {
-                        "properties": {
-                            "givenName": {
-                                "type": "string"
-                            },
-                            "manager": {
-                                "properties": {
-                                    "employeeId": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "surname": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    }
-                }
-            },
-            "Set-APIURL": {
+            "Get_Resource_assigned_to_Package": {
                 "runAfter": {},
-                "type": "InitializeVariable",
-                "inputs": {
-                    "variables": [
-                        {
-                            "name": "APIURL",
-                            "type": "string",
-                            "value": "https://graph.microsoft.com/v1.0/servicePrincipals/efbf203f-08b0-4ad1-872c-cfe21cfb7580/synchronization/jobs/API2AAD.e0e1f74aa30042c6a65c917c4befb560.5de63f34-e2d0-442f-9f52-85c6a6b91d76/bulkUpload"
-                        }
-                    ]
-                }
-            },
-            "Update_Priv_SCIM_": {
-                "runAfter": {
-                    "parse_Priv_user": [
-                        "Succeeded"
-                    ]
-                },
                 "type": "Http",
                 "inputs": {
-                    "uri": "@variables('APIURL')",
-                    "method": "POST",
-                    "headers": {
-                        "Content-Type": "application/scim+json"
-                    },
-                    "body": {
-                        "Operations": [
-                            {
-                                "bulkId": "@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}",
-                                "data": {
-                                    "displayName": "@{body('parse_Priv_user')?['displayName']}",
-                                    "externalId": "@{body('parse_Priv_user')?['employeeId']}",
-                                    "name": {
-                                        "familyName": "@{body('Manager_PARSE_EDIT')?['surname']}",
-                                        "givenName": "@{body('Manager_PARSE_EDIT')?['givenName']}"
-                                    },
-                                    "schemas": [
-                                        "urn:ietf:params:scim:schemas:core:2.0:User",
-                                        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
-                                    ],
-                                    "title": "@body('User_Data_Parse')?['jobTitle']"
-                                },
-                                "method": "POST",
-                                "path": "/Users"
-                            }
-                        ],
-                        "schemas": [
-                            "urn:ietf:params:scim:api:messages:2.0:BulkRequest"
-                        ]
-                    },
+                    "uri": "https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/@{triggerBody()?['AccessPackage']?['Id']}?$expand=accessPackageResourceRoleScopes($expand=accessPackageResourceRole,accessPackageResourceScope)",
+                    "method": "GET",
                     "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://graph.microsoft.com"
                     }
                 },
                 "runtimeConfiguration": {
@@ -376,84 +303,227 @@ You can use any of the following data sources to store the consent correlation d
                     }
                 }
             },
-            "User_Data_Parse": {
+            "Parse_Access_package_response": {
                 "runAfter": {
-                    "Get_Manager": [
+                    "Get_Resource_assigned_to_Package": [
                         "Succeeded"
                     ]
                 },
                 "type": "ParseJson",
                 "inputs": {
-                    "content": "@body('Get_Users_data')",
+                    "content": "@body('Get_Resource_assigned_to_Package')",
                     "schema": {
+                        "type": "object",
                         "properties": {
-                            "department": {
-                                "type": "string"
+                            "accessPackageResourceRoleScopes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "accessPackageResourceRole": {
+                                            "type": "object",
+                                            "properties": {
+                                                "originId": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "originId"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "accessPackageResourceRole"
+                                    ]
+                                }
+                            }
+                        },
+                        "required": [
+                            "accessPackageResourceRoleScopes"
+                        ]
+                    }
+                }
+            },
+            "For_each_1": {
+                "foreach": "@outputs('Parse_Access_package_response')?['body']?['accessPackageResourceRoleScopes']",
+                "actions": {
+                    "Get_a_row": {
+                        "metadata": {
+                            "013PAXKNPUBABUDUCKB5BLWCPSPTEP6TPS": "/AccessPackageLookup/ApplicationIDtoDGPERM.xlsx"
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
+                                }
                             },
-                            "jobTitle": {
-                                "type": "string"
-                            },
-                            "onPremisesExtensionAttributes": {
-                                "properties": {
-                                    "extensionAttribute15": {
-                                        "type": "string"
+                            "method": "get",
+                            "path": "/drives/@{encodeURIComponent('b!hab2joo7DU2VbEF8XnhY316PX-DE_0RFv5PSU44RgzPmV0KBvw04SJS9RYZeuhVB')}/files/@{encodeURIComponent(encodeURIComponent('013PAXKNPUBABUDUCKB5BLWCPSPTEP6TPS'))}/tables/@{encodeURIComponent('{6CFB91FA-5743-4C6E-BA01-5747A04F2142}')}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_1')?['accessPackageResourceRole']?['originId']))}",
+                            "queries": {
+                                "source": "sites/mngenvmcap899704.sharepoint.com,8ef6a685-3b8a-4d0d-956c-417c5e7858df,e05f8f5e-ffc4-4544-bf93-d2538e118333",
+                                "idColumn": "ApplicationID"
+                            }
+                        }
+                    },
+                    "Condition": {
+                        "actions": {
+                            "Is_Removed_Stage": {
+                                "actions": {
+                                    "Set_Permissions": {
+                                        "type": "Http",
+                                        "inputs": {
+                                            "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants",
+                                            "method": "POST",
+                                            "body": {
+                                                "clientId": "@{body('Get_a_row')?['ApplicationID']}",
+                                                "consentType": "Principal",
+                                                "resourceId": "@{body('Get_a_row')?['ResourceID']}",
+                                                "principalId": "@{triggerBody()?['Assignment']?['Target']?['ObjectId']}",
+                                                "scope": "@{body('Get_a_row')?['Permissions']}"
+                                            },
+                                            "authentication": {
+                                                "type": "ManagedServiceIdentity",
+                                                "audience": "https://graph.microsoft.com"
+                                            }
+                                        },
+                                        "runtimeConfiguration": {
+                                            "contentTransfer": {
+                                                "transferMode": "Chunked"
+                                            }
+                                        }
                                     }
                                 },
-                                "type": "object"
+                                "else": {
+                                    "actions": {
+                                        "Get_permissions_PER_user_Per_APP": {
+                                            "type": "Http",
+                                            "inputs": {
+                                                "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?%24filter=clientid+eq+'@{body('Get_a_row')?['ApplicationID']}'+and+principalId+eq+'@{triggerBody()?['Assignment']?['Target']?['ObjectId']}'",
+                                                "method": "GET",
+                                                "authentication": {
+                                                    "type": "ManagedServiceIdentity",
+                                                    "audience": "https://graph.microsoft.com/"
+                                                }
+                                            },
+                                            "runtimeConfiguration": {
+                                                "contentTransfer": {
+                                                    "transferMode": "Chunked"
+                                                }
+                                            }
+                                        },
+                                        "Parse_individual_ODIC_PERM": {
+                                            "runAfter": {
+                                                "Get_permissions_PER_user_Per_APP": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ParseJson",
+                                            "inputs": {
+                                                "content": "@body('Get_permissions_PER_user_Per_APP')",
+                                                "schema": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "value": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "value"
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        "For_each": {
+                                            "foreach": "@outputs('Parse_individual_ODIC_PERM')?['body']?['value']",
+                                            "actions": {
+                                                "Delete_permissions_4_odic": {
+                                                    "type": "Http",
+                                                    "inputs": {
+                                                        "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants/@{items('For_each')?['id']}",
+                                                        "method": "DELETE",
+                                                        "authentication": {
+                                                            "type": "ManagedServiceIdentity",
+                                                            "audience": "https://graph.microsoft.com"
+                                                        }
+                                                    },
+                                                    "runtimeConfiguration": {
+                                                        "contentTransfer": {
+                                                            "transferMode": "Chunked"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "runAfter": {
+                                                "Parse_individual_ODIC_PERM": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Foreach"
+                                        }
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "not": {
+                                                "equals": [
+                                                    "@triggerBody()?['Stage']",
+                                                    "AssignmentRemoved"
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "type": "If"
                             }
                         },
-                        "type": "object"
+                        "runAfter": {
+                            "Get_a_row": [
+                                "Succeeded",
+                                "Failed"
+                            ]
+                        },
+                        "else": {
+                            "actions": {
+                                "Compose_1": {
+                                    "type": "Compose",
+                                    "inputs": "@body('Get_a_row')"
+                                }
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "not": {
+                                        "equals": [
+                                            "@body('Get_a_row')?['Permissions']",
+                                            "@null"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "type": "If"
                     }
-                }
-            },
-            "parse_Priv_user": {
+                },
                 "runAfter": {
-                    "Get_priv_ID_info": [
+                    "Parse_Access_package_response": [
                         "Succeeded"
                     ]
                 },
-                "type": "ParseJson",
-                "inputs": {
-                    "content": "@body('Get_priv_ID_info')",
-                    "schema": {
-                        "properties": {
-                            "displayName": {
-                                "type": "string"
-                            },
-                            "employeeId": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
-                    }
-                }
-            },
-            "update_manager": {
-                "runAfter": {
-                    "Update_Priv_SCIM_": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http",
-                "inputs": {
-                    "uri": "https://graph.microsoft.com/v1.0/users/@{body('User_Data_Parse')?['onPremisesExtensionAttributes']?['extensionAttribute15']}/manager/$ref",
-                    "method": "PUT",
-                    "headers": {
-                        "Content-Type": "application/json"
-                    },
-                    "body": {
-                        "@@odata.id": "https://graph.microsoft.com/v1.0/users/@{triggerBody()?['data']?['subject']?['manager']?['id']}"
-                    },
-                    "authentication": {
-                        "audience": "https://graph.microsoft.com/",
-                        "type": "ManagedServiceIdentity"
-                    }
-                },
-                "runtimeConfiguration": {
-                    "contentTransfer": {
-                        "transferMode": "Chunked"
-                    }
-                }
+                "type": "Foreach"
             }
         },
         "outputs": {},
@@ -467,7 +537,13 @@ You can use any of the following data sources to store the consent correlation d
     "parameters": {
         "$connections": {
             "type": "Object",
-            "value": {}
+            "value": {
+                "excelonlinebusiness": {
+                    "id": "/subscriptions/b91f57c6-f572-4f58-a857-e0953c9c895d/providers/Microsoft.Web/locations/eastus/managedApis/excelonlinebusiness",
+                    "connectionId": "/subscriptions/b91f57c6-f572-4f58-a857-e0953c9c895d/resourceGroups/Logic_App_Automation/providers/Microsoft.Web/connections/excelonlinebusiness",
+                    "connectionName": "excelonlinebusiness"
+                }
+            }
         }
     }
 }
@@ -580,3 +656,28 @@ Write-Host "Granted Storage Table Data Reader access" -ForegroundColor Green
 2. After approval, the custom extension should trigger
 3. Check Logic App run history for execution details
 4. Verify consent request is sent to user by viewing the odic application and looking at the permissions
+ble Data Reader access" -ForegroundColor Green
+
+```
+
+## Part 8: Configuring Access Packages to Use Custom Extension
+
+### Step 1: Navigate to Access Package
+
+1. In **Entra ID Admin Center**, go to **Identity Governance** → **Entitlement Management**
+2. Click **Access packages**
+3. Select the access package you want to add consent requirements to
+
+### Step 2: Edit Access Package Policy
+
+1. Click on the policy you want to modify (or create a new one)
+2. Scroll to **Custom extensions** section
+3. Click **Add custom extension**
+
+### Step 3: Configure Custom Extension for Policy
+
+1. **Select custom extension**: Choose `OCID-Consent-Extension`
+2. **Stage**: is **Assignment is granted** 
+3. select another **Stage**: and select **Assignment is removed**
+4. Click **Save**
+
