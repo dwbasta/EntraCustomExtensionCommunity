@@ -1,6 +1,6 @@
-# OCID Consents - Entitlement Management Custom Extension
+# OIDC Consents - Entitlement Management Custom Extension
 
-This template demonstrates how to automatically request user consent when access packages are assigned using Entitlement Management custom extensions. The solution correlates access packages to specific ODIC consent requirements using an external data source.
+This template demonstrates how to automatically request user consent when access packages are assigned using Entitlement Management custom extensions. The solution correlates access packages to specific OIDC consent requirements using an external data source.
 
 ---
 
@@ -26,7 +26,7 @@ Access Package Request → Entitlement Management → Custom Extension → Logic
                                                                           ↓
                                                         Query Consent Requirements
                                                                           ↓
-                                                          Request ODIC User Consent
+                                                          Request OIDC User Consent
                                                                           ↓
                                                         Log Consent Response
 
@@ -46,21 +46,21 @@ Using an external data source to correlate access packages to consent requiremen
 ### Data Source Options
 
 You can use any of the following data sources to store the consent correlation data:
-1. Blob Tables -- what this Custom extention is going to use.
+1. Blob Tables -- what this Custom extension is going to use.
 2. CSV file
-3. MSSQL with Onpremise Data Gateway
-4. Or you own homegrown solution
+3. MSSQL with On-premise Data Gateway
+4. Or your own homegrown solution
 
-### Creating the Azure Tbale
+### Creating the Azure Table
 
 ```
 
-# Variables#
-$resourceGroup = MyResourceGroupn"
+# Variables
+$resourceGroup = "MyResourceGroup"
 $location      = "EastUS"
-$storageName   mystoragesta$(Get-Random)"   # must be globally unique and all lower case and numbers
-$tableName     = "odiclookupGovernance"
-$tenantid   "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"   # <-- your Tenant ID here
+$storageName   = "mystoragesta$(Get-Random)"   # must be globally unique and all lower case and numbers
+$tableName     = "oidclookupGovernance"
+$tenantid      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"   # <-- your Tenant ID here
 
 
 # Login to Azure
@@ -83,18 +83,16 @@ $ctx = New-AzStorageContext -StorageAccountName $storageName -UseConnectedAccoun
 # Create Table
 New-AzStorageTable -Name $tableName -Context $ctx
 
-Write-Host "Storage account '$storageName' created P## Turn off Application concent
-
-with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
+Write-Host "Storage account '$storageName' created with table '$tableName'"
 
 ```
 
 
 ### Selecting an Application to test
 1. Find your application for instance ([Virus Total](https://www.virustotal.com/gui/sign-in))
-2. Sing in with your test account. View the ODIC application concents and accept these values
-3. Go to the enterprise application blade in entra and find Virus total (VT SSO)
-4. **Permissions** on the Left side. Then **User concents** and view the recorded permissions. Save these for later will need it when filling out the blob storage
+2. Sign in with your test account. View the OIDC application consents and accept these values
+3. Go to the enterprise application blade in Entra and find Virus Total (VT SSO)
+4. **Permissions** on the Left side. Then **User consents** and view the recorded permissions. Save these for later; you will need it when filling out the blob storage
 
 
 ## Part 1: Creating a Custom Extension in Entitlement Management
@@ -103,17 +101,17 @@ with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
 
 1. Open **Entra ID Admin Center** ([https://entra.microsoft.com](https://entra.microsoft.com))
 2. Navigate to **Identity Governance** → **Entitlement Management**
-3. in the left navigation, click **Catelogs** then select your catelog you want
+3. In the left navigation, click **Catalogs** then select your catalog you want
 4. In the left navigation, click **Custom extensions**
 5. Click **Add custom extension**
 
 ### Step 2: Configure Basic Settings
 
-1. **Name**: Enter `OCID-Consent-Extension`
+1. **Name**: Enter `OIDC-Consent-Extension`
 2. **Description**: Enter `Requests user consent based on access package assignment`
-3. **Entension Type**: Select **Request workflow**
+3. **Extension Type**: Select **Request workflow**
 4. **Extension Configuration**: Select **Launch and continue**
-5. **Details** Create logic app Yes then Select your subscription, Resource group and logic app name `entitlement-consent-extension`
+5. **Details**: Create logic app, then select your subscription, Resource group and logic app name `entitlement-consent-extension`
 6. **Create a logic app** then review and create to finish
 
 
@@ -594,7 +592,7 @@ The managed identity needs different permissions based on your data source and c
 1. **DelegatedPermissionGrant.ReadWrite.All**: Manage all delegated permission grants
 2. **EntitlementManagement.Read.All**: To read access package details
 
-#### powershell script
+#### PowerShell script
 
 ```
 
@@ -624,7 +622,7 @@ New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrinc
 $resourceGroup = "MyResourceGroup"
 $location      = "EastUS"
 $storageName   = "mystoragename$(Get-Random)"   # must be globally unique and all lower case and numbers
-$tableName     = "odiclookupGovernance"
+$tableName     = "oidclookupGovernance"
 $tenantid      = "YourEntraTenantID"
 
 # Login to Azure
@@ -658,7 +656,7 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
 # Grant Storage Table Data Reader role
 $storageAccountName      = "YOUR_STORAGE_ACCOUNT"
 $resourceGroupName       = "YOUR_RESOURCE_GROUP"
-$managedIdentityObjectId = "YOUR_OBJECT_ID" #Custom extentions managed identity
+$managedIdentityObjectId = "YOUR_OBJECT_ID" # Custom extension's managed identity
 
 # Get the Storage Account
 $storageAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName
@@ -700,9 +698,9 @@ Write-Host "Granted Storage Table Data Contributor access to current user" -Fore
 
 ### Step 3: Configure Custom Extension for Policy
 
-1. **Select custom extension**: Choose `OCID-Consent-Extension`
+1. **Select custom extension**: Choose `OIDC-Consent-Extension`
 2. **Stage**: is **Assignment is granted** 
-3. select another **Stage**: and select **Assignment is removed**
+3. Select another **Stage**: and select **Assignment is removed**
 4. Click **Save**
 
 ---
@@ -729,21 +727,21 @@ Write-Host "Granted Storage Table Data Contributor access to current user" -Fore
 2. Click on the application from the search results to select it
 3. The application details will appear on the right side
 
-## Adding the Access package id and permissions blob table
+## Adding the Access package ID and permissions blob table
 
-1. Copy the Access package object id which is at the overview page of each access package. 
+1. Copy the Access package object ID which is at the overview page of each access package. 
 2. Go to the blob storage table --> your storage account then **Storage Browser** then **table** and edit the table created.
-3. Find the resource ID of an application via graph
+3. Find the resource ID of an application via Graph
 
 ```
 GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/{AccessPackageID}?$expand=accessPackageResourceRoleScopes($expand=accessPackageResourceRole,accessPackageResourceScope)
 ```
 
-3. Add the following data into your table (you will need to add the Permission collumn and the ODIC permissions is going to be different for each app)
+3. Add the following data into your table (you will need to add the Permission column and the OIDC permissions are going to be different for each app)
 
 
 | Partition Key | Row Key | Permissions | ResourceID |
-|-----------------|------------------|-------------------|-----------------|
-| `ODICUserConcents` | Access Package Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
+|-----------------|------------------|-------------------|------------------|
+| `OIDCUserConsents` | Access Package Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
 
-4. Update the Logic app step **Initialize storage variables** with you **BlobTableEndpoint** and Optionally **TableName** if you used an exsisting table
+4. Update the Logic app step **Initialize storage variables** with your **BlobTableEndpoint** and Optionally **TableName** if you used an existing table
