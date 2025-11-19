@@ -35,20 +35,41 @@ This directory contains **template examples** for building custom extensions in 
 
 ## 📑 Extension Templates
 
-### 1️⃣ Governing Oath Consents
+### 1️⃣ Governing OIDC Consents
+
+> [!WARNING]
+> **Advanced Custom Extension Template**  
+> This is an advanced implementation requiring extensive knowledge of Azure Logic Apps, Microsoft Graph API, and Entra ID Identity Governance. It involves complex configuration including:
+> - Azure Storage Tables setup and management
+> - Managed Identity permissions configuration
+> - Making Graph API calls to Entra
+> - Advanced Logic App development
+> 
+> **Prerequisites:**
+> - Strong understanding of Entra ID custom extensions
+> - Experience with Azure Logic Apps and Microsoft Graph
+> - Knowledge of OIDC/OAuth 2.0 protocols
+> - Access to Azure subscription for storage and Logic Apps
+> 
+> This template is **not recommended for beginners**. Ensure you have proper testing environments before implementation.
 
 **Purpose:**  
-In governance, consent is a critical control point. Custom extensions can enforce **Oath Consents** before granting entitlements, ensuring users explicitly acknowledge responsibilities or compliance requirements.
+Automatically manage OIDC (OpenID Connect) user consents when access packages containing enterprise applications are assigned or removed. This custom extension correlates access packages to specific OIDC consent requirements using an external data source.
 
 **Why Useful (Governance Approach):**  
-- Provides an auditable record of user consent.  
-- Ensures compliance with regulatory frameworks (e.g., GDPR, HIPAA, internal policies).  
-- Adds a governance layer beyond simple access approval.  
+- Provides an auditable record of user consent for application access
+- Ensures compliance with regulatory frameworks (e.g., GDPR, HIPAA, internal policies)
+- Automates the complex process of granting and revoking OIDC permissions
+- Centrally manages consent requirements through external data correlation
+- Adds a governance layer beyond simple access approval
 
 **Example Workflow:**  
-- User requests an access package.  
-- Custom extension triggers an external consent form (e.g., digital signature service).  
-- Access is only granted once consent is confirmed and logged.  
+- User is granted an access package containing an enterprise application
+- Custom extension reads the application's required OIDC permissions from Azure Storage Table
+- Extension automatically grants the required delegated permissions to the user
+- When access is revoked, the extension removes the OIDC consents
+
+📄 **[OIDC Consents Template](./Templates/OIDC%20Consents.md)**  
 
 ---
 

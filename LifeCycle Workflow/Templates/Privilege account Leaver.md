@@ -45,7 +45,7 @@ Using the Inbound API Provisioning Service for privileged account offboarding of
 > Please refer to the 📄 **[Privileged Account Joiner Template](./Templates/Privilege%20account%20Joiner.md)** for inbound API provisioning setup 
 
 >[!Important]
-> The Api provisioning will only work on the privilege accounts that are in an eligable state. If the Active account has an assigned access on credentials check out the custom extention will need higher privilege and can not use the API provisioning service.
+> The API provisioning will only work on the privilege accounts that are in an eligible state. If the active account has an assigned access on credentials check out, the custom extension will need higher privilege and cannot use the API provisioning service.
 
 
 ---
