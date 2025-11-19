@@ -54,6 +54,7 @@ You can use any of the following data sources to store the consent correlation d
 ### Creating the Azure Tbale
 
 ```
+
 # Variables#
 $resourceGroup = MyResourceGroupn"
 $location      = "EastUS"
@@ -86,7 +87,8 @@ Write-Host "Storage account '$storageName' created P## Turn off Application conc
 
 with table '$tableName'"ame' in tenant '$tenantId'"ed with table '$tableName'"
 
-````
+```
+
 
 ### Selecting an Application to test
 1. Find your application for instance ([Virus Total](https://www.virustotal.com/gui/sign-in))
@@ -615,21 +617,70 @@ New-MgServicePrincipalAppRoleAssignment -PrincipalId $managedID.Id -ServicePrinc
 
 ### Step 5: Grant Data Source Access
 
-#### For Azure Storage Table:
+#### Create Azure Storage Table:
+
+```
+# Variables
+$resourceGroup = "MyResourceGroup"
+$location      = "EastUS"
+$storageName   = "mystoragename$(Get-Random)"   # must be globally unique and all lower case and numbers
+$tableName     = "odiclookupGovernance"
+$tenantid      = "YourEntraTenantID"
+
+# Login to Azure
+Connect-AzAccount -Tenant $tenantId
+
+# Create Resource Group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create Storage Account
+New-AzStorageAccount `
+    -ResourceGroupName $resourceGroup `
+    -Name $storageName `
+    -Location $location `
+    -SkuName Standard_LRS `
+    -Kind StorageV2
+
+# Get Storage Account context
+$ctx = New-AzStorageContext -StorageAccountName $storageName -UseConnectedAccount
+
+# Create Table
+New-AzStorageTable -Name $tableName -Context $ctx
+
+Write-Host "Storage account '$storageName' created with table '$tableName'"
+
+```
+
+### Add permissions
 
 ```
 
 # Grant Storage Table Data Reader role
-$storageAccountName = "YOUR_STORAGE_ACCOUNT"
-$resourceGroupName = "YOUR_RESOURCE_GROUP"
-$managedIdentityObjectId = "YOUR_OBJECT_ID"
+$storageAccountName      = "YOUR_STORAGE_ACCOUNT"
+$resourceGroupName       = "YOUR_RESOURCE_GROUP"
+$managedIdentityObjectId = "YOUR_OBJECT_ID" #Custom extentions managed identity
 
+# Get the Storage Account
 $storageAccount = Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName
+
+# Grant Reader to the Managed Identity
 New-AzRoleAssignment -ObjectId $managedIdentityObjectId `
     -RoleDefinitionName "Storage Table Data Reader" `
     -Scope $storageAccount.Id
 
-Write-Host "Granted Storage Table Data Reader access" -ForegroundColor Green
+Write-Host "Granted Storage Table Data Reader access to Managed Identity" -ForegroundColor Green
+
+# Get the current user’s ObjectId
+$currentUser = (Get-AzContext).Account.Id
+$currentUserObject = Get-AzADUser -UserPrincipalName $currentUser
+
+# Grant Contributor to the current user
+New-AzRoleAssignment -ObjectId $currentUserObject.Id `
+    -RoleDefinitionName "Storage Table Data Contributor" `
+    -Scope $storageAccount.Id
+
+Write-Host "Granted Storage Table Data Contributor access to current user" -ForegroundColor Green
+
 
 ```
 
@@ -680,4 +731,19 @@ Write-Host "Granted Storage Table Data Reader access" -ForegroundColor Green
 
 ## Adding the Access package id and permissions blob table
 
-coming soon
+1. Copy the Access package object id which is at the overview page of each access package. 
+2. Go to the blob storage table --> your storage account then **Storage Browser** then **table** and edit the table created.
+3. Find the resource ID of an application via graph
+
+```
+GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/{AccessPackageID}?$expand=accessPackageResourceRoleScopes($expand=accessPackageResourceRole,accessPackageResourceScope)
+```
+
+3. Add the following data into your table (you will need to add the Permission collumn and the ODIC permissions is going to be different for each app)
+
+
+| Partition Key | Row Key | Permissions | ResourceID |
+|-----------------|------------------|-------------------|-----------------|
+| `ODICUserConcents` | Access Package Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
+
+4. Update the Logic app step **Initialize storage variables** with you **BlobTableEndpoint** and Optionally **TableName** if you used an exsisting table
