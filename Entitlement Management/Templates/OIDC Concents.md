@@ -745,3 +745,109 @@ GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/ac
 | `OIDCUserConsents` | Access Package Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
 
 4. Update the Logic app step **Initialize storage variables** with your **BlobTableEndpoint** and Optionally **TableName** if you used an existing table
+
+---
+
+## Part 10: Requesting Access Through the Access Package Assignment Page
+
+Once the access package has been configured with the custom extension and resources, users can request access through the MyAccess portal. The custom extension will automatically handle OIDC consent during the assignment process.
+
+### Step 1: Access the MyAccess Portal
+
+1. Navigate to **MyAccess portal**: [https://myaccess.microsoft.com](https://myaccess.microsoft.com)
+2. Sign in with your organizational account
+3. You'll land on the **My Access** home page
+
+### Step 2: Browse Available Access Packages
+
+1. In the MyAccess portal, click **Access packages** in the left navigation menu
+2. You'll see a list of all available access packages you can request
+3. Use the search box to filter for specific packages, or browse through the catalog
+4. Click on the access package name to view its details
+
+### Step 3: Request Access to the Package
+
+1. On the access package details page, review:
+   - **Description**: What the access package provides
+   - **Resources**: What applications and groups are included
+   - **Policy information**: Request requirements and approval settings
+   - **Duration**: How long the access will last
+
+2. Click the **Request access** button
+3. If multiple policies are available, select the appropriate policy for your request
+4. Fill out any required information:
+   - **Business justification**: Explain why you need access
+   - **Custom questions**: Answer any additional questions configured by the administrator
+   - **Duration**: Select the duration if configurable
+
+5. Review your request details
+6. Click **Submit** to send your request
+
+### Step 4: Approval Process (If Required)
+
+If the access package requires approval:
+1. You'll see a message indicating your request has been submitted
+2. Designated approvers will receive a notification
+3. Track your request status in **My Access** → **Requests** → **Pending approvals**
+4. You'll receive an email notification once your request is approved or denied
+
+### Step 5: Automatic OIDC Consent Assignment
+
+Once your access request is approved (or auto-approved):
+1. The custom extension will automatically trigger
+2. The Logic App will:
+   - Look up the access package in the Azure Table Storage
+   - Identify the required OIDC permissions for the application
+   - Grant the consent on your behalf using the permissions configured in the table
+3. This happens automatically in the background - no additional user interaction needed
+
+### Step 6: Access the Application
+
+After the assignment is complete:
+1. You'll receive a confirmation email
+2. The application will appear in your **My Apps** portal: [https://myapps.microsoft.com](https://myapps.microsoft.com)
+3. Click on the application icon to launch it
+4. Since the OIDC consent was already granted via the custom extension, you won't be prompted for consent
+5. You'll be signed in automatically with the appropriate permissions
+---
+
+## Part 11: Testing Access Package Assignment Removal
+
+Testing the removal process ensures that OIDC permissions are properly revoked when access is removed.
+
+### Step 1: Remove an Active Assignment (Administrator)
+
+As an administrator, you can test the removal process:
+
+1. Navigate to **Entra ID Admin Center** ([https://entra.microsoft.com](https://entra.microsoft.com))
+2. Go to **Identity Governance** → **Entitlement Management**
+3. Click **Access packages**
+4. Select the access package with the OIDC consent extension
+5. Click **Assignments** in the left menu
+6. Find the user assignment you want to remove
+7. Select the assignment and click **Remove access**
+8. Confirm the removal
+
+### Step 2: Verify Custom Extension Triggered
+
+After removing the assignment:
+
+1. Navigate to your Logic App: `entitlement-consent-extension`
+2. Click **Overview** → **Runs history**
+3. Look for a recent run triggered by the removal
+4. Click on the run to view details
+5. Verify that:
+   - The trigger shows `Stage: "AssignmentRemoved"`
+   - The workflow executed the removal path in the **Is_Removed_Stage** condition
+   - The **Get_permissions_PER_user_Per_APP** action was executed
+   - The **Delete_permissions_4_odic** action successfully removed the OIDC permissions
+
+### Step 3: Verify OIDC Permissions Were Revoked
+
+Check that the user's OIDC permissions were actually removed:
+
+1. Go back to the enterprise application
+2. Click on Permissions on the left
+3. Check what the user consents are.
+
+
