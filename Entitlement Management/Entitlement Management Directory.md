@@ -15,13 +15,13 @@ This directory contains **template examples** for building custom extensions in 
    - Identify the business or governance requirement (e.g., external consent, distribution list management).  
    - Ensure it cannot be solved with native Entitlement Management features.  
 
-2. **Register the Extension**  
-   - Use Microsoft Graph API to register a custom extension.  
+2. **Create the Extension**  
+   - Create the custom extension in a entitlement management catalog.  
    - Provide metadata such as `id`, `description`, and `target` (e.g., access package assignment).  
 
 3. **Implement the Logic**  
    - Build an external service or API endpoint that the extension will call.  
-   - Ensure it can handle authentication and authorization securely.  
+   - Ensure it can handle authentication and authorization securely (preferably Managed Identity).  
 
 4. **Bind to Entitlement Management**  
    - Attach the extension to an **access package policy** or **assignment workflow**.  
