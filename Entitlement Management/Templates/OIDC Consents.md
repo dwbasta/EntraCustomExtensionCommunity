@@ -57,13 +57,15 @@ graph TD
 
 ### Why Use an External Data Source?
 
-Using an external data source to correlate access packages to consent requirements provides several advantages:
+Access packages currently only supports a few types of access natively. Using an external data source to correlate access packages to a much larger set of object types. Below are the onjects that are supported natively:
 
-1. **Centralized Management**: Single source of truth for consent requirements
-2. **Easy Updates**: Change consent requirements without modifying code
-3. **Audit Trail**: Track changes to consent mappings over time
-4. **Flexibility**: Support complex consent scenarios with multiple conditions
-5. **Scalability**: Manage thousands of access packages efficiently
+1. **Groups**: M365 groups, Writeback groups, security groups, PIM enabled groups.
+2. **Enterprise Apps**: Provision roles based on the roles in side the enterprise apps
+3. **Entra roles - Preview**: Preview feature to automatically apply certain entra roles to users
+4. **Sharepoint Sites**: Provision direct access to a sharepoint site instead of at the group level
+5. **API Permissions - Preview**: For instance graph api permissions
+
+All ofther permission/entitlement might need a look up table to correlate the object to an access package.
 
 ### Data Source Options
 
@@ -756,7 +758,7 @@ Write-Host "Granted Storage Table Data Contributor access to current user" -Fore
 3. Find the resource ID of an application via Graph
 
 ```
-GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/{AccessPackageID}?$expand=accessPackageResourceRoleScopes($expand=accessPackageResourceRole,accessPackageResourceScope)
+GET https://graph.microsoft.com/v1.0/oauth2PermissionGrants?$filter=clientid+eq+’{ObjectID}’
 ```
 
 3. Add the following data into your table (you will need to add the Permission column and the OIDC permissions are going to be different for each app)
@@ -773,6 +775,9 @@ GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/ac
 ## Part 10: Requesting Access Through the Access Package Assignment Page
 
 Once the access package has been configured with the custom extension and resources, users can request access through the MyAccess portal. The custom extension will automatically handle OIDC consent during the assignment process.
+
+> [!Note]
+> This is designed to work with user application concent in the most restrictive mode. **Enterprise Application** --> **Consent and Permissions** --> **User Consent Settings** --> Set it to **Do not allow user consent**
 
 ### Step 1: Access the MyAccess Portal
 
