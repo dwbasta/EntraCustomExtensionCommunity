@@ -17,19 +17,41 @@ This solution uses:
 
 ## Architecture
 
+```mermaid
+graph TD
+    A[Access Package Request] --> B[Entitlement Management]
+    B --> C[Custom Extension]
+    C --> D[Logic App]
+    D --> E[Managed Identity]
+    E --> F[External Data Source]
+    F --> G[Query Consent Requirements]
+    G --> H[Request OIDC User Consent]
+    H --> I[Log Consent Response]
+    
+    style A fill:#0078d4,stroke:#005a9e,stroke-width:2px,color:#fff
+    style B fill:#0078d4,stroke:#005a9e,stroke-width:2px,color:#fff
+    style C fill:#00bcf2,stroke:#0095c7,stroke-width:2px,color:#fff
+    style D fill:#00bcf2,stroke:#0095c7,stroke-width:2px,color:#fff
+    style E fill:#50e6ff,stroke:#00bcf2,stroke-width:2px,color:#000
+    style F fill:#ffb900,stroke:#d39300,stroke-width:2px,color:#000
+    style G fill:#ffb900,stroke:#d39300,stroke-width:2px,color:#000
+    style H fill:#bad80a,stroke:#9cb000,stroke-width:2px,color:#000
+    style I fill:#bad80a,stroke:#9cb000,stroke-width:2px,color:#000
+```
 
-Access Package Request → Entitlement Management → Custom Extension → Logic App
-                                                                          ↓
-                                                                Managed Identity
-                                                                          ↓
-                                                              External Data Source
-                                                                          ↓
-                                                        Query Consent Requirements
-                                                                          ↓
-                                                          Request OIDC User Consent
-                                                                          ↓
-                                                        Log Consent Response
+### Workflow Steps
 
+1. **Access Package Request** - User requests access to resources
+2. **Entitlement Management** - Evaluates the request against policies
+3. **Custom Extension** - Triggers the consent workflow
+4. **Logic App** - Orchestrates the consent process
+5. **Managed Identity** - Provides secure authentication
+6. **External Data Source** - Stores consent mappings
+7. **Query Consent Requirements** - Retrieves required permissions
+8. **Request OIDC User Consent** - Grants OAuth permissions
+9. **Log Consent Response** - Records the consent action
+
+---
 
 ## Part 1: External Data Source for Consent Correlation
 
