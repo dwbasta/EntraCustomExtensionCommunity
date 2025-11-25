@@ -149,7 +149,6 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
 4. Click **Save**
 
 ```
-
 {
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
@@ -317,7 +316,11 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
         },
         "actions": {
             "Get_Resource_assigned_to_Package": {
-                "runAfter": {},
+                "runAfter": {
+                    "Initialize_storage_variables": [
+                        "Succeeded"
+                    ]
+                },
                 "type": "Http",
                 "inputs": {
                     "uri": "https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackages/@{triggerBody()?['AccessPackage']?['Id']}?$expand=accessPackageResourceRoleScopes($expand=accessPackageResourceRole,accessPackageResourceScope)",
@@ -377,25 +380,6 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
             "For_each_1": {
                 "foreach": "@outputs('Parse_Access_package_response')?['body']?['accessPackageResourceRoleScopes']",
                 "actions": {
-                    "Get_a_row": {
-                        "metadata": {
-                            "013PAXKNPUBABUDUCKB5BLWCPSPTEP6TPS": "/AccessPackageLookup/ApplicationIDtoDGPERM.xlsx"
-                        },
-                        "type": "ApiConnection",
-                        "inputs": {
-                            "host": {
-                                "connection": {
-                                    "name": "@parameters('$connections')['excelonlinebusiness']['connectionId']"
-                                }
-                            },
-                            "method": "get",
-                            "path": "/drives/@{encodeURIComponent('b!hab2joo7DU2VbEF8XnhY316PX-DE_0RFv5PSU44RgzPmV0KBvw04SJS9RYZeuhVB')}/files/@{encodeURIComponent(encodeURIComponent('013PAXKNPUBABUDUCKB5BLWCPSPTEP6TPS'))}/tables/@{encodeURIComponent('{6CFB91FA-5743-4C6E-BA01-5747A04F2142}')}/items/@{encodeURIComponent(encodeURIComponent(items('For_each_1')?['accessPackageResourceRole']?['originId']))}",
-                            "queries": {
-                                "source": "sites/mngenvmcap899704.sharepoint.com,8ef6a685-3b8a-4d0d-956c-417c5e7858df,e05f8f5e-ffc4-4544-bf93-d2538e118333",
-                                "idColumn": "ApplicationID"
-                            }
-                        }
-                    },
                     "Condition": {
                         "actions": {
                             "Is_Removed_Stage": {
@@ -406,11 +390,11 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                                             "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants",
                                             "method": "POST",
                                             "body": {
-                                                "clientId": "@{body('Get_a_row')?['ApplicationID']}",
+                                                "clientId": "@{item()['accessPackageResourceRole']['originId']}",
                                                 "consentType": "Principal",
-                                                "resourceId": "@{body('Get_a_row')?['ResourceID']}",
+                                                "resourceId": "@{body('Parse_JSON')?['resourceid']}",
                                                 "principalId": "@{triggerBody()?['Assignment']?['Target']?['ObjectId']}",
-                                                "scope": "@{body('Get_a_row')?['Permissions']}"
+                                                "scope": "@{body('Parse_JSON')?['permissions']}"
                                             },
                                             "authentication": {
                                                 "type": "ManagedServiceIdentity",
@@ -429,7 +413,7 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                                         "Get_permissions_PER_user_Per_APP": {
                                             "type": "Http",
                                             "inputs": {
-                                                "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?%24filter=clientid+eq+'@{body('Get_a_row')?['ApplicationID']}'+and+principalId+eq+'@{triggerBody()?['Assignment']?['Target']?['ObjectId']}'",
+                                                "uri": "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?%24filter=clientid+eq+'@{item()['accessPackageResourceRole']['originId']}'+and+principalId+eq+'@{triggerBody()?['Assignment']?['Target']?['ObjectId']}'",
                                                 "method": "GET",
                                                 "authentication": {
                                                     "type": "ManagedServiceIdentity",
@@ -520,25 +504,20 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                             }
                         },
                         "runAfter": {
-                            "Get_a_row": [
+                            "Parse_JSON": [
                                 "Succeeded",
                                 "Failed"
                             ]
                         },
                         "else": {
-                            "actions": {
-                                "Compose_1": {
-                                    "type": "Compose",
-                                    "inputs": "@body('Get_a_row')"
-                                }
-                            }
+                            "actions": {}
                         },
                         "expression": {
                             "and": [
                                 {
                                     "not": {
                                         "equals": [
-                                            "@body('Get_a_row')?['Permissions']",
+                                            "@body('Parse_JSON')?['permissions']",
                                             "@null"
                                         ]
                                     }
@@ -546,6 +525,50 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                             ]
                         },
                         "type": "If"
+                    },
+                    "Get_entity_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent(variables('BlobTableEndpoint')))}/tables/@{encodeURIComponent(variables('TableName'))}/entities(PartitionKey='@{encodeURIComponent('ODICUserConcents')}',RowKey='@{encodeURIComponent(item()['accessPackageResourceRole']['originId'])}')",
+                            "queries": {
+                                "$select": "permissions, resourceid"
+                            }
+                        }
+                    },
+                    "Parse_JSON": {
+                        "runAfter": {
+                            "Get_entity_(V2)": [
+                                "Succeeded",
+                                "Failed"
+                            ]
+                        },
+                        "type": "ParseJson",
+                        "inputs": {
+                            "content": "@body('Get_entity_(V2)')",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "odata.metadata": {
+                                        "type": "string"
+                                    },
+                                    "odata.etag": {
+                                        "type": "string"
+                                    },
+                                    "permissions": {
+                                        "type": "string"
+                                    },
+                                    "resourceid": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "runAfter": {
@@ -554,6 +577,24 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                     ]
                 },
                 "type": "Foreach"
+            },
+            "Initialize_storage_variables": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "BlobTableEndpoint",
+                            "type": "string",
+                            "value": "basta2112461141"
+                        },
+                        {
+                            "name": "TableName",
+                            "type": "string",
+                            "value": "odiclookupGovernance"
+                        }
+                    ]
+                }
             }
         },
         "outputs": {},
@@ -563,18 +604,7 @@ Write-Host "Storage account '$storageName' created with table '$tableName'"
                 "defaultValue": {}
             }
         }
-    },
-    "parameters": {
-        "$connections": {
-            "type": "Object",
-            "value": {
-                "excelonlinebusiness": {
-                    "id": "/subscriptions/b91f57c6-f572-4f58-a857-e0953c9c895d/providers/Microsoft.Web/locations/eastus/managedApis/excelonlinebusiness",
-                    "connectionId": "/subscriptions/b91f57c6-f572-4f58-a857-e0953c9c895d/resourceGroups/Logic_App_Automation/providers/Microsoft.Web/connections/excelonlinebusiness",
-                    "connectionName": "excelonlinebusiness"
-                }
-            }
-        }
+    
     }
 }
 
@@ -766,7 +796,7 @@ GET https://graph.microsoft.com/v1.0/oauth2PermissionGrants?$filter=clientid+eq+
 
 | Partition Key | Row Key | Permissions | ResourceID |
 |-----------------|------------------|-------------------|------------------|
-| `OIDCUserConsents` | Access Package Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
+| `OIDCUserConsents` | Enterprise Application Object ID | profile email openid User.Read | 2be0b995-bef9-4618-9e2e-18538e8308c7 |
 
 4. Update the Logic app step **Initialize storage variables** with your **BlobTableEndpoint** and Optionally **TableName** if you used an existing table
 
