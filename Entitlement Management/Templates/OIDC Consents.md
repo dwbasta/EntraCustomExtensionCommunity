@@ -735,6 +735,47 @@ Write-Host "Granted Storage Table Data Contributor access to current user" -Fore
 
 
 ```
+### Step 6: Fix the Get entity V2 account issues
+
+1. Delete the **Get Entity (V2)** step
+2. Readd the  **Get Entity (V2)** for Azure Table storage, Fill in the following information
+
+> [!Note]
+> Both Storage Account Name and Table you need to select custom before pasting the information below.
+
+#### Partion Key
+
+```
+OIDCUserConsents
+```
+#### Row Key
+
+```
+@{item()['accessPackageResourceRole']['originId']}
+```
+
+#### Storage Account Name or Table Name
+```
+@{variables('BlobTableEndpoint')}
+```
+#### Table 
+```
+@{variables('TableName')}
+```
+#### Advanced Parameters - Select Query
+```
+permissions, resourceid
+```
+
+
+3. Replace the next step **Parse Json**  contect with the follow
+
+```
+@{body('Get_entity_(V2)')}
+```
+
+4. Save the workflow and make sure there is no issues displaying in the Logic app designer
+
 
 ## Part 8: Configuring Access Packages to Use Custom Extension
 
