@@ -68,6 +68,18 @@ Custom extensions can enhance this by:
 
 ---
 
+## 🤝 Contribute to This Repository
+
+This repository is open for contributions!
+Have an interesting custom extension or Logic App for governance scenarios? Follow these steps to contribute:
+
+1. [Fork this Repo](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) - Click the Fork button at the top-right corner of this page.
+
+2. Update your forked repo - Clone your forked repo locally and make your changes.
+
+3. [Submit a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) - From your forked repo, create a pull request back to this repository.
+
+
 ## 📜 License & Support
 
 - Provided **without warranty or support**.  
