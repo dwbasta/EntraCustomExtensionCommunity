@@ -4,6 +4,7 @@ Welcome to the **Unofficial Custom Extensions Repository** for Microsoft Entra I
 This repository provides **template examples** of custom extensions that can be used to extend Entra Identity Governance scenarios.  
 
 ⚠️ **Important Disclaimer**  
+
 - These extensions are provided **as-is** for educational and template purposes only.  
 - They are **not intended for production use**.  
 - No warranty, guarantee, or official support is provided.  
@@ -15,6 +16,7 @@ This repository provides **template examples** of custom extensions that can be 
 
 A **custom extension** in Entra Identity Governance is a way to integrate external logic or services into governance workflows.  
 They allow you to:  
+
 - Call external APIs or services during identity lifecycle events.  
 - Add business-specific rules or automation beyond built-in capabilities.  
 - Provide flexibility for unique organizational requirements.  
@@ -27,12 +29,14 @@ Think of them as "hooks" that let you extend Entra workflows with your own logic
 
 Lifecycle workflows in Entra Identity Governance automate identity-related tasks such as onboarding, offboarding, and role changes.  
 Custom extensions can be used to:  
+
 - Trigger external processes when a user joins, leaves, or changes roles.  
 - Notify third-party systems (e.g., HR, ITSM, or ticketing platforms).  
 - Enforce organization-specific compliance checks.  
 - Automate provisioning/deprovisioning in non-native systems.  
 
 **Example Use Cases:**  
+
 - Automatically send a welcome package request to HR when a new employee is onboarded.  
 - Call an external API to disable accounts in a legacy system during offboarding.  
 - Trigger a workflow to update a badge access system when a user changes departments.
@@ -45,12 +49,14 @@ Custom extensions can be used to:
 
 Entitlement Management in Entra Identity Governance helps manage access packages and approvals.  
 Custom extensions can enhance this by:  
+
 - Adding external approval logic (e.g., checking a compliance system before granting access).  
 - Sending notifications to external systems when access is granted or revoked.  
 - Logging entitlement decisions into third-party audit systems.  
 - Enforcing additional business rules beyond built-in policies.  
 
 **Example Use Cases:**  
+
 - Require an external risk check before approving access to sensitive applications.  
 - Notify a manager via a custom system when an access package is assigned.  
 - Record entitlement decisions in a custom database for audit purposes.
@@ -68,17 +74,28 @@ Custom extensions can enhance this by:
 
 ---
 
-## 🤝 Contribute to This Repository
+## 🤝 Contribute to this Repository
 
-This repository is open for contributions!
+**This repository is open for contributions!**
+
 Have an interesting custom extension or Logic App for governance scenarios? Follow these steps to contribute:
 
 1. [Fork this Repo](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) - Click the Fork button at the top-right corner of this page.
 
-2. Update your forked repo - Clone your forked repo locally and make your changes.
+2. Clone your fork - Clone your fork locally and make your changes in your own branch.
 
-3. [Submit a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) - From your forked repo, create a pull request back to this repository.
+3. Add your contribution to the correct folder - Browse the repo structure to find the category that best matches your contribution (e.g., Entitlement Management or lifecycle workflows governance scenario).
+    - If no suitable category exists, feel free to create a new folder following the existing naming conventions.
+    - Keep the structure organized and consistent with the rest of the repo
 
+4. Provide clear documentation - Include a markdown file in your contribution folder that explains:
+    - The purpose of the custom extension or Logic App.
+    - How to deploy and configure it.
+    - Any prerequisites or dependencies.
+    - Code – Include your Workflow Definition, custom connector JSON, or any supporting scripts.
+    - Usage guidance - How someone can deploy or adapt your sample.
+
+4. [Submit a pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) - From your forked repo, create a pull request back to this repository, be sure to include a brief summary of your contribution and any relevant notes.
 
 ## 📜 License & Support
 
