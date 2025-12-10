@@ -1,4 +1,4 @@
-# 🔐 Unofficial Custom Extensions for Entra Identity Governance
+# 🔐 Community driven Custom Extensions for Entra Identity Governance Repository
 
 Welcome to the **Unofficial Custom Extensions Repository** for Microsoft Entra Identity Governance.  
 This repository provides **template examples** of custom extensions that can be used to extend Entra Identity Governance scenarios.  
